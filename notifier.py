@@ -105,7 +105,7 @@ def send_alert(new_by_page: Dict[str, List[ProductEntry]]) -> None:
 
     gmail_user = os.environ.get("GMAIL_USER", "").strip()
     gmail_pass = os.environ.get("GMAIL_PASS", "").strip()
-    recipient = os.environ.get("NOTIFY_EMAIL", "baidikmustnot@gmail.com").strip()
+    recipient = os.environ.get("NOTIFY_EMAIL", "").strip() or "baidikmustnot@gmail.com"
 
     if not gmail_user or not gmail_pass:
         raise RuntimeError(
