@@ -1,0 +1,64 @@
+# ──────────────────────────────────────────────────────────────
+# .github/workflows/scrape.yml
+# Runs every 30 minutes. Scrapes listing pages, detects new products,
+# sends email alerts, and commits the updated snapshot back to the repo.
+# ──────────────────────────────────────────────────────────────
+
+name: Stock Tracker — New Arrivals
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed for git push of snapshot.json
+
+jobs:
+  scrape:
+    name: Scrape & Detect New Arrivals
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      GMAIL_USER:   ${{ secrets.GMAIL_USER }}
+      GMAIL_PASS:   ${{ secrets.GMAIL_PASS }}
+      NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Only needed for karzanddolls + keraladiecastcars (Playwright scrapers)
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Run stock tracker
+        run: python main.py
+
+      # Persist snapshot.json so next run can detect incremental changes
+      - name: Commit updated snapshot
+        run: |
+          git config user.name "Stock Tracker Bot"
+          git config user.email "bot@github.com"
+          git add snapshot.json
+          git diff --cached --quiet || git commit -m "Update snapshot [skip ci]"
+          git push
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-log-${{ github.run_number }}
+          path: "*.log"
+          if-no-files-found: ignore
+          retention-days: 7

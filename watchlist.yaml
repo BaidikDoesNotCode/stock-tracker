@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------
+# watchlist.yaml — Listing Pages to Watch for New Arrivals
+# ---------------------------------------------------------------
+# Each entry defines a listing/collection/category page to scrape.
+# The scraper extracts ALL products visible on the page and compares
+# against snapshot.json to detect new additions.
+#
+# Fields:
+#   name    : Human-readable label (used in email subject)
+#   url     : Full URL of the listing/collection page
+#   scraper : Key matching SCRAPER_REGISTRY in scrapers/__init__.py
+#
+# Available scrapers:
+#   karzanddolls      — Angular SPA listing pages (Playwright)
+#   giftgalaxy        — Shopify /products.json API
+#   1isto64           — Shopify /collections/{handle}/products.json API
+#   keraladiecastcars  — Wix site (Playwright)
+#   kolkatakomics      — Wix SSR listing pages (requests + BS4)
+#   notatoy            — Stub (DNS dead)
+# ---------------------------------------------------------------
+
+pages:
+
+  # ── karzanddolls.com ─────────────────────────────────────────
+  - name: "KarzAndDolls — Mini GT"
+    url: "https://www.karzanddolls.com/details/mini+gt+/mini-gt/MTY1"
+    scraper: karzanddolls
+
+  - name: "KarzAndDolls — Mini GT Blister Pack"
+    url: "https://www.karzanddolls.com/details/mini+gt+/mini-gt-blister-pack/MTY2"
+    scraper: karzanddolls
+
+  - name: "KarzAndDolls — Hot Wheels Car Culture"
+    url: "https://www.karzanddolls.com/details/hot+wheels/car-culture/MTEx"
+    scraper: karzanddolls
+
+  # ── 1isto64.com ──────────────────────────────────────────────
+  - name: "1isto64 — Mini GT Collection"
+    url: "https://1isto64.com/collections/mini-gt"
+    scraper: 1isto64
+
+  # ── giftgalaxy.in ────────────────────────────────────────────
+  # Homepage features the latest products. The scraper uses
+  # /products.json sorted by newest-first to catch all additions.
+  - name: "GiftGalaxy — Latest Products"
+    url: "https://www.giftgalaxy.in/"
+    scraper: giftgalaxy
+
+  # ── keraladiecastcars.com ────────────────────────────────────
+  - name: "Kerala Diecast Cars — Home"
+    url: "https://www.keraladiecastcars.com/"
+    scraper: keraladiecastcars
+
+  # ── kolkatakomics.com ────────────────────────────────────────
+  # Shop category listing pages:
+  #   /shop-1  = Hotwheels    /shop-59 = Majorette
+  #   /shop-57 = ZD Toys      /shop-46 = Lego
+  #   /shop-60 = Bburago      /shop-49 = Matchbox
+  - name: "KolkataKomics — Hotwheels"
+    url: "https://www.kolkatakomics.com/shop-1"
+    scraper: kolkatakomics
+
+  - name: "KolkataKomics — Majorette"
+    url: "https://www.kolkatakomics.com/shop-59"
+    scraper: kolkatakomics
+
+  # ── notatoy.com (DNS dead — uncomment when site returns) ─────
+  # - name: "NotAToy — Home"
+  #   url: "https://www.notatoy.com/"
+  #   scraper: notatoy
