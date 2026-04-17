@@ -51,18 +51,10 @@ pages:
     url: "https://www.keraladiecastcars.com/"
     scraper: keraladiecastcars
 
-  # ── kolkatakomics.com ────────────────────────────────────────
-  # Shop category listing pages:
-  #   /shop-1  = Hotwheels    /shop-59 = Majorette
-  #   /shop-57 = ZD Toys      /shop-46 = Lego
-  #   /shop-60 = Bburago      /shop-49 = Matchbox
-  - name: "KolkataKomics — Hotwheels"
-    url: "https://www.kolkatakomics.com/shop-1"
-    scraper: kolkatakomics
-
-  - name: "KolkataKomics — Majorette"
-    url: "https://www.kolkatakomics.com/shop-59"
-    scraper: kolkatakomics
+  # ── kolkatakomics.com (removed — Wix SSR changes too often) ───
+  # - name: "KolkataKomics — Hotwheels"
+  #   url: "https://www.kolkatakomics.com/shop-1"
+  #   scraper: kolkatakomics
 
   # ── notatoy.com (DNS dead — uncomment when site returns) ─────
   # - name: "NotAToy — Home"
