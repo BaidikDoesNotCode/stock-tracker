@@ -157,7 +157,7 @@ def main() -> None:
     # 4. Print summary
     print("\n" + checker.summarize(results, new_by_page) + "\n")
 
-    # 5. Save updated snapshot (ALWAYS — even if no new items)
+    # 5. Save updated snapshot FIRST (even if email fails, progress is kept)
     checker.save_snapshot(updated_snapshot)
 
     # 6. Send email if there are new items
@@ -167,7 +167,12 @@ def main() -> None:
     elif args.dry_run:
         logger.info(f"--dry-run: {total_new} new item(s) found but email skipped.")
     else:
-        notifier.send_alert(new_by_page)
+        try:
+            notifier.send_alert(new_by_page)
+        except Exception as e:
+            logger.error(f"EMAIL FAILED: {e}")
+            logger.error("Snapshot was saved — new items won't be re-alerted next run.")
+            logger.error("Fix GMAIL_USER / GMAIL_PASS secrets and re-run.")
 
     logger.info("Done.")
 
