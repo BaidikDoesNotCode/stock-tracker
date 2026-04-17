@@ -30,6 +30,13 @@ import notifier
 from scrapers import SCRAPER_REGISTRY
 from scrapers.base import ListingResult
 
+# ── Fix Windows console encoding (cp1252 can't print ₹, emojis, etc.) ───
+import io
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # ── Logging ──────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,

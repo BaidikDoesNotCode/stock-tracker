@@ -65,7 +65,7 @@ def find_new_products(
 
     for result in results:
         if result.error:
-            logger.warning(f"⚠️  SCRAPE ERROR | {result.page_name} | {result.error}")
+            logger.warning(f"[ERROR]      {result.page_name} | {result.error}")
             continue
 
         page_key = result.page_url
@@ -74,7 +74,7 @@ def find_new_products(
         if page_key not in snapshot:
             # First run for this page — save all as known, alert nothing
             logger.info(
-                f"📋 FIRST RUN    | {result.page_name} | "
+                f"[FIRST RUN]  {result.page_name} | "
                 f"Saving {len(result.products)} products as baseline (no alert)"
             )
             updated_snapshot[page_key] = {
@@ -90,9 +90,9 @@ def find_new_products(
             new_items = [p for p in result.products if p.url in new_urls]
             new_by_page[result.page_name] = new_items
             for item in new_items:
-                logger.info(f"🆕 NEW PRODUCT  | {result.page_name} | {item.name} | {item.url}")
+                logger.info(f"[NEW]        {result.page_name} | {item.name} | {item.url}")
         else:
-            logger.info(f"✅ NO NEW ITEMS | {result.page_name} | {len(result.products)} products unchanged")
+            logger.info(f"[OK]         {result.page_name} | {len(result.products)} products unchanged")
 
         # Update snapshot: merge new URLs into known set
         updated_snapshot[page_key] = {
@@ -108,26 +108,25 @@ def summarize(results: List[ListingResult], new_by_page: Dict[str, List[ProductE
     lines = ["=" * 60, "NEW ARRIVALS CHECK SUMMARY", "=" * 60]
     for r in results:
         if r.error:
-            lines.append(f"  ⚠️  {r.page_name:<35} ERROR: {r.error}")
+            lines.append(f"  [ERROR] {r.page_name:<35} {r.error}")
         else:
             new_count = len(new_by_page.get(r.page_name, []))
             if new_count:
-                lines.append(f"  🆕 {r.page_name:<35} {new_count} NEW product(s)!")
+                lines.append(f"  [NEW]   {r.page_name:<35} {new_count} NEW product(s)!")
             else:
-                lines.append(f"  ✅ {r.page_name:<35} {len(r.products)} products (no new)")
+                lines.append(f"  [OK]    {r.page_name:<35} {len(r.products)} products (no new)")
     lines.append("=" * 60)
 
-    # Detail section for new items
     if new_by_page:
         lines.append("")
         lines.append("NEW PRODUCTS DETECTED:")
         lines.append("-" * 60)
         for page_name, items in new_by_page.items():
-            lines.append(f"\n  📦 {page_name}:")
+            lines.append(f"\n  {page_name}:")
             for item in items:
                 price_str = f" ({item.price})" if item.price else ""
-                lines.append(f"      • {item.name}{price_str}")
-                lines.append(f"        {item.url}")
+                lines.append(f"    - {item.name}{price_str}")
+                lines.append(f"      {item.url}")
         lines.append("")
 
     return "\n".join(lines)

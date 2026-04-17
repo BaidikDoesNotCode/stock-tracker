@@ -1,16 +1,15 @@
 # Stock Tracker — Python Dependencies
 # Install with: pip install -r requirements.txt
 
-# HTTP requests (static-HTML scrapers)
-requests==2.32.3
+# HTTP requests
+requests
 
-# HTML parsing
-beautifulsoup4==4.12.3
-lxml==5.2.2           # Faster BS4 parser
+# HTML parsing (uses Python's built-in html.parser — no C compiler needed)
+beautifulsoup4
 
-# YAML config parsing
-PyYAML==6.0.2
+# YAML config
+PyYAML
 
-# JS-rendered page scraping (only needed if using site_c / Playwright scraper)
+# Headless browser (karzanddolls + keraladiecastcars scrapers)
 # After pip install, also run: playwright install chromium
-playwright==1.44.0
+playwright

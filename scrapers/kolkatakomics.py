@@ -9,6 +9,7 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from collections import defaultdict
 
 from .base import BaseScraper, ListingResult, ProductEntry
 
@@ -17,17 +18,23 @@ logger = logging.getLogger(__name__)
 REQUEST_TIMEOUT = 20
 BASE_URL = "https://www.kolkatakomics.com"
 
+# Text badges Wix appends to link text — stripped before name extraction
+BADGE_PREFIXES = [
+    "Quick View", "NEW ARRIVAL", "BESTSELLER",
+    "LAST 2 PIECES", "LAST PIECE", "OUT OF STOCK",
+    "SOLD OUT", "LAST 3 PIECES",
+]
+
 
 class KolkataKomicsScraper(BaseScraper):
     """
     Static-HTML scraper for kolkatakomics.com shop/category listing pages.
 
-    Parses product entries that Wix renders server-side in the HTML.
-    Product cards on this site contain:
-      - Product name (in heading elements)
-      - Price (₹xxx.00)
-      - "Add to Cart" or "Out of Stock"
-      - Link to /product-page/{slug}
+    Product cards on this site have MULTIPLE <a> tags sharing the same href:
+      - First <a>: badge text only ("Quick ViewNEW ARRIVAL")
+      - Second <a>: product name + price ("Combo of X+YPrice₹334.00")
+    We collect ALL text from all <a> tags with the same /product-page/ URL
+    and pick the best candidate for the product name.
     """
 
     def scrape_listing(self, page: dict) -> ListingResult:
@@ -39,51 +46,51 @@ class KolkataKomicsScraper(BaseScraper):
             resp = requests.get(url, headers=self.DEFAULT_HEADERS, timeout=REQUEST_TIMEOUT)
             resp.raise_for_status()
 
-            soup = BeautifulSoup(resp.text, "lxml")
-            products = []
-            seen_urls = set()
+            soup = BeautifulSoup(resp.text, "html.parser")
 
-            # Strategy: Find all links to /product-page/ detail pages
+            # Collect ALL text fragments from all <a> tags sharing the same product URL
+            url_texts: dict[str, list[str]] = defaultdict(list)
             for a_tag in soup.find_all("a", href=True):
                 href = a_tag["href"]
                 if "/product-page/" not in href:
                     continue
-
                 full_url = urljoin(BASE_URL, href)
-                if full_url in seen_urls:
-                    continue
-                seen_urls.add(full_url)
+                text = a_tag.get_text(strip=True)
+                if text:
+                    url_texts[full_url].append(text)
 
-                # Extract product name from the link text or nearby heading
-                product_name = a_tag.get_text(strip=True)
+            logger.info(f"[KolkataKomics] Found {len(url_texts)} unique product URLs")
 
-                # Clean up — Wix often prepends "Quick View" badges to link text
-                for prefix in ["Quick View", "NEW ARRIVAL", "BESTSELLER",
-                               "LAST 2 PIECES", "LAST PIECE", "OUT OF STOCK"]:
+            products = []
+            for product_url, texts in url_texts.items():
+                # Pick the longest text fragment — it's the one with the actual product name
+                # (badge-only fragments like "Quick ViewNEW ARRIVAL" are shorter)
+                best_text = max(texts, key=len)
+
+                # Strip badge prefixes
+                product_name = best_text
+                for prefix in BADGE_PREFIXES:
                     product_name = product_name.replace(prefix, "").strip()
 
-                # Extract price if embedded in the text
+                # Extract price if embedded — format: "Product NamePrice₹xxx.00"
                 price = ""
-                if "₹" in product_name:
-                    # Split name and price — format: "Product NamePrice₹xxx.00"
-                    parts = product_name.split("Price")
-                    if len(parts) == 2:
-                        product_name = parts[0].strip()
-                        price = parts[1].strip()
-                    elif "₹" in product_name:
-                        # Price at the end
-                        idx = product_name.rfind("₹")
-                        price = product_name[idx:].strip()
-                        product_name = product_name[:idx].strip()
+                if "Price" in product_name and "\u20b9" in product_name:
+                    parts = product_name.split("Price", 1)
+                    product_name = parts[0].strip()
+                    price = parts[1].strip()
+                elif "\u20b9" in product_name:
+                    idx = product_name.rfind("\u20b9")
+                    price = product_name[idx:].strip()
+                    product_name = product_name[:idx].strip()
 
                 if product_name and len(product_name) > 3:
                     products.append(ProductEntry(
                         name=product_name,
-                        url=full_url,
+                        url=product_url,
                         price=price,
                     ))
 
-            logger.info(f"[KolkataKomics] Found {len(products)} products on {url}")
+            logger.info(f"[KolkataKomics] Extracted {len(products)} products from {url}")
             return ListingResult(page_name=name, page_url=url, products=products)
 
         except requests.exceptions.RequestException as e:
