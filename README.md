@@ -106,7 +106,7 @@ Edit `watchlist.yaml`. Each entry:
 | `NOTIFY_EMAIL` | Recipient email (optional; defaults to `GMAIL_USER`) |
 
 ### 5 — Enable GitHub Actions
-**Actions tab** → enable workflows. It will run every 30 minutes automatically.
+**Actions tab** → enable workflows. It will run every 5 minutes automatically.
 
 ---
 
