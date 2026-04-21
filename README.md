@@ -1,8 +1,8 @@
-# Stock Tracker — New Arrivals Detector 📦
+# Diecast Stock Tracker 
 
-A **100% free, automated new-product detector** — watches e-commerce listing pages and emails you the moment anything new is added.
+A **100% free, automated new-product detector** , watches e-commerce listing pages and emails you the moment anything new is added.
 
-No paid APIs. No cloud subscriptions. Just GitHub Actions + Gmail.
+works directly from github actions.
 
 ---
 
@@ -148,15 +148,4 @@ GMAIL_USER=you@gmail.com GMAIL_PASS=xxxx python main.py
 | requests + BS4 | Product names appear in `View Source` / `curl` output |
 | Playwright | Products only appear after JavaScript runs |
 
----
 
-## Cost
-
-| Component | Cost |
-|---|---|
-| GitHub Actions (public repo) | Free (unlimited) |
-| GitHub Actions (private repo) | Free (2,000 min/month) |
-| Gmail SMTP | Free |
-| Everything else | Free |
-
-**Total: $0/month**
