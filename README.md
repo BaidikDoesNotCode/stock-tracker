@@ -1,8 +1,6 @@
 # Diecast Stock Tracker 
 
-A **100% free, automated new-product detector** , watches e-commerce listing pages and emails you the moment anything new is added.
-
-works directly from github actions.
+A **100% free, automated new-product detector** , watches e-commerce listing pages using github cron and emails you the moment anything new is added.
 
 ---
 
