@@ -16,6 +16,10 @@
 #   1isto64           — Shopify /collections/{handle}/products.json API
 #   keraladiecastcars  — Wix site (Playwright)
 #   kolkatakomics      — Wix SSR listing pages (requests + BS4)
+#   toymarche          — StoreHippo Angular SPA (Playwright)
+#   tooneywheels       — WordPress/WooCommerce (requests + BS4, paginated)
+#   toyssam            — Shopify /collections/{handle}/products.json API
+#   playfolio          — Shopify /collections/{handle}/products.json API
 #   notatoy            — Stub (DNS dead)
 # ---------------------------------------------------------------
 
@@ -50,6 +54,36 @@ pages:
   - name: "Kerala Diecast Cars — Home"
     url: "https://www.keraladiecastcars.com/"
     scraper: keraladiecastcars
+
+  # ── toymarche.com ─────────────────────────────────────────────
+  # StoreHippo Angular SPA. Scraped with Playwright; product links
+  # are scoped to the #th2uiview container to exclude nav noise.
+  - name: "ToyMarche — Matchbox"
+    url: "https://www.toymarche.com/brand/matchbox"
+    scraper: toymarche
+
+  # ── tooneywheels.in ──────────────────────────────────────────
+  # WordPress/WooCommerce site; server-rendered HTML, paginated.
+  # Sorted by date to surface newest listings first.
+  - name: "TooneyWheels — 1:64 Scale Cars"
+    url: "https://tooneywheels.in/product-category/diecast-vehicles/scale-model-cars/164-scale/?orderby=date"
+    scraper: tooneywheels
+
+  # ── toyssam.com ───────────────────────────────────────────────
+  # Shopify store; uses /collections/{handle}/products.json API.
+  # The watchlist URL points to page 2 but the JSON API fetches all
+  # products across all pages sorted by the store's default order.
+  - name: "ToysSam — Hot Wheels"
+    url: "https://www.toyssam.com/collections/hotwheels?sort_by=created-descending&grid=default&page=2"
+    scraper: toyssam
+
+  # ── playfolio.in ─────────────────────────────────────────────
+  # Shopify store; uses /collections/{handle}/products.json API.
+  # Price filter params in the URL are not applied to the JSON API;
+  # the full hot-wheels collection is scraped for new-arrival detection.
+  - name: "Playfolio — Hot Wheels"
+    url: "https://playfolio.in/collections/hot-wheels?filter.v.price.gte=0&filter.v.price.lte=2100&sort_by=created-descending"
+    scraper: playfolio
 
   # ── kolkatakomics.com (removed — Wix SSR changes too often) ───
   # - name: "KolkataKomics — Hotwheels"

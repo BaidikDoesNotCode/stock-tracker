@@ -67,15 +67,34 @@ class KarzAndDollsScraper(BaseScraper):
                 pg.wait_for_timeout(2000)
 
                 # Extract product cards — Angular renders them as divs/cards with
-                # a product name, image, and link. We look for anchor tags that
-                # point to /product/ detail pages.
+                # a product name, image, and link.
+                #
+                # FIX: Scope to the Angular-rendered content area (#th2uiview or
+                # main) to exclude nav/header/footer links from being counted as
+                # products. Only links whose path strictly contains '/product/'
+                # are considered real product pages on this site.
                 raw_products = pg.evaluate("""() => {
                     const results = [];
-                    // Strategy 1: Find all links containing '/product/' in href
-                    const links = document.querySelectorAll('a[href*="/product/"]');
                     const seen = new Set();
+
+                    // Scope to the main Angular view container to avoid nav links
+                    const container = (
+                        document.querySelector('#th2uiview') ||
+                        document.querySelector('main') ||
+                        document.body
+                    );
+
+                    // Strategy 1: Find all /product/ links inside the content area
+                    const links = container.querySelectorAll('a[href*="/product/"]');
                     for (const a of links) {
                         const href = a.href;
+                        // Only keep links whose pathname actually contains /product/
+                        // (not e.g. /products.json or /product-category)
+                        try {
+                            const path = new URL(href).pathname;
+                            if (!path.includes('/product/')) continue;
+                        } catch (e) { continue; }
+
                         if (seen.has(href)) continue;
                         seen.add(href);
 
@@ -92,11 +111,16 @@ class KarzAndDollsScraper(BaseScraper):
                     }
 
                     // Strategy 2: If no /product/ links, try generic product cards
+                    // within the content container
                     if (results.length === 0) {
-                        const cards = document.querySelectorAll('[class*="product"], [class*="card"], [class*="item"]');
+                        const cards = container.querySelectorAll(
+                            '[class*="product"], [class*="card"], [class*="item"]'
+                        );
                         for (const card of cards) {
                             const a = card.querySelector('a');
-                            const nameEl = card.querySelector('h2, h3, h4, .name, .title, [class*="name"], [class*="title"]');
+                            const nameEl = card.querySelector(
+                                'h2, h3, h4, .name, .title, [class*="name"], [class*="title"]'
+                            );
                             if (a && nameEl) {
                                 const n = nameEl.innerText.trim();
                                 if (n.length > 2 && !seen.has(a.href)) {

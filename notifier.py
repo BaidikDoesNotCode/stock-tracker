@@ -29,11 +29,11 @@ def _build_email(
 ) -> MIMEMultipart:
     """Construct a multipart email for new product alerts."""
     total_new = sum(len(items) for items in new_by_page.values())
-    subject = f"🆕 New Products Alert: {total_new} item(s) across {len(new_by_page)} page(s)!"
+    subject = f"🆕 Latest Release: {total_new} new item(s) across {len(new_by_page)} page(s)!"
 
     # ── Plain text body ─────────────────────────────────────────
     text_lines = [
-        f"New products detected on {len(new_by_page)} listing page(s):\n",
+        f"Latest Release — {len(new_by_page)} listing page(s):\n",
     ]
     for page_name, items in new_by_page.items():
         text_lines.append(f"  [{page_name}]")
@@ -74,7 +74,7 @@ def _build_email(
       <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;
                   box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;">
         <div style="background:linear-gradient(135deg,#059669,#10b981);padding:24px;">
-          <h1 style="color:#fff;margin:0;font-size:22px;">🆕 New Products Detected</h1>
+          <h1 style="color:#fff;margin:0;font-size:22px;">🆕 Latest Release</h1>
           <p style="color:#d1fae5;margin:6px 0 0;">{total_new} new item(s) across {len(new_by_page)} page(s)</p>
         </div>
         <div style="padding:24px;">
