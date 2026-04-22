@@ -8,13 +8,26 @@ app — product cards are rendered client-side and invisible in raw HTML.
 Expected URL format (category listing):
   /details/{category}/{subcategory}/{categoryId}
   e.g. /details/mini+gt+/mini-gt/MTY1
+
+URL normalisation note:
+  KarzAndDolls appends a random session token as the last path segment of every
+  product URL, e.g.:
+    /product/mini-gt/mini-gt-nissan-gtr/a7432aeb...G6rqPlk-
+  This token changes on every page load, so without stripping it every product
+  would appear "new" on every run. _normalize_url() removes this token, leaving
+  the stable /product/{category}/{slug} form as the identity key.
 """
 import logging
+import re
+from urllib.parse import urlparse, urlunparse
 from .base import BaseScraper, ListingResult, ProductEntry
 
 logger = logging.getLogger(__name__)
 
 WAIT_TIMEOUT_MS = 25_000
+
+# The token is a long (≥40 char) hex/base64 string at the end of the path.
+_TOKEN_RE = re.compile(r'/[A-Za-z0-9+/=_\-]{40,}[-]?$')
 
 
 class KarzAndDollsScraper(BaseScraper):
@@ -24,6 +37,18 @@ class KarzAndDollsScraper(BaseScraper):
     Navigates to a category listing, waits for Angular hydration,
     then extracts all product cards (name + URL + price).
     """
+
+    @staticmethod
+    def _normalize_url(url: str) -> str:
+        """
+        Strip the random session token from a KarzAndDolls product URL.
+
+        Input:  https://www.karzanddolls.com/product/mini-gt/nissan-gtr/<token>
+        Output: https://www.karzanddolls.com/product/mini-gt/nissan-gtr
+        """
+        parsed = urlparse(url)
+        clean_path = _TOKEN_RE.sub('', parsed.path).rstrip('/')
+        return urlunparse(parsed._replace(path=clean_path, query='', fragment=''))
 
     def scrape_listing(self, page: dict) -> ListingResult:
         try:
@@ -69,10 +94,9 @@ class KarzAndDollsScraper(BaseScraper):
                 # Extract product cards — Angular renders them as divs/cards with
                 # a product name, image, and link.
                 #
-                # FIX: Scope to the Angular-rendered content area (#th2uiview or
-                # main) to exclude nav/header/footer links from being counted as
-                # products. Only links whose path strictly contains '/product/'
-                # are considered real product pages on this site.
+                # Scope to the Angular-rendered content area (#th2uiview or main)
+                # to exclude nav/header/footer links. Only links whose path strictly
+                # contains '/product/' are considered real product pages.
                 raw_products = pg.evaluate("""() => {
                     const results = [];
                     const seen = new Set();
@@ -89,7 +113,6 @@ class KarzAndDollsScraper(BaseScraper):
                     for (const a of links) {
                         const href = a.href;
                         // Only keep links whose pathname actually contains /product/
-                        // (not e.g. /products.json or /product-category)
                         try {
                             const path = new URL(href).pathname;
                             if (!path.includes('/product/')) continue;
@@ -136,7 +159,7 @@ class KarzAndDollsScraper(BaseScraper):
                 browser.close()
 
                 products = [
-                    ProductEntry(name=p["name"], url=p["url"])
+                    ProductEntry(name=p["name"], url=self._normalize_url(p["url"]))
                     for p in raw_products
                 ]
                 logger.info(f"[KarzAndDolls] Found {len(products)} products on {url}")
@@ -145,3 +168,4 @@ class KarzAndDollsScraper(BaseScraper):
         except Exception as e:
             logger.exception(f"[KarzAndDolls] Error scraping {url}: {e}")
             return ListingResult(page_name=name, page_url=url, error=str(e))
+
