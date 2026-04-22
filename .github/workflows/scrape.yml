@@ -18,7 +18,7 @@ jobs:
   scrape:
     name: Scrape & Detect New Arrivals
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     env:
       GMAIL_USER:   ${{ secrets.GMAIL_USER }}

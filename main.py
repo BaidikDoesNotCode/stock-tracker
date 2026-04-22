@@ -20,6 +20,7 @@ Usage:
 import argparse
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import List
 
@@ -145,36 +146,50 @@ def main() -> None:
 
     logger.info(f"Checking {len(pages)} listing page(s)…\n")
 
-    # 1. Load snapshot
-    snapshot = checker.load_snapshot()
+    # Loop the scrape cycle multiple times within a single cron invocation.
+    # GitHub Actions minimum cron interval is 5 min; looping 4 times with
+    # 60-second sleeps covers ~4 min of the window for faster detection.
+    LOOP_COUNT = 4
+    SLEEP_SECONDS = 60
 
-    # 2. Scrape all listing pages
-    results = run_scrapers(pages)
+    for iteration in range(1, LOOP_COUNT + 1):
+        logger.info(f"── Iteration {iteration}/{LOOP_COUNT} ──")
 
-    # 3. Find new products
-    new_by_page, updated_snapshot = checker.find_new_products(results, snapshot)
+        # 1. Load snapshot (re-read each iteration to pick up our own saves)
+        snapshot = checker.load_snapshot()
 
-    # 4. Print summary
-    print("\n" + checker.summarize(results, new_by_page) + "\n")
+        # 2. Scrape all listing pages
+        results = run_scrapers(pages)
 
-    # 5. Save updated snapshot FIRST (even if email fails, progress is kept)
-    checker.save_snapshot(updated_snapshot)
+        # 3. Find new products
+        new_by_page, updated_snapshot = checker.find_new_products(results, snapshot)
 
-    # 6. Send email if there are new items
-    total_new = sum(len(items) for items in new_by_page.values())
-    if total_new == 0:
-        logger.info("No new products detected. No email sent.")
-    elif args.dry_run:
-        logger.info(f"--dry-run: {total_new} new item(s) found but email skipped.")
-    else:
-        try:
-            notifier.send_alert(new_by_page)
-        except Exception as e:
-            logger.error(f"EMAIL FAILED: {e}")
-            logger.error("Snapshot was saved — new items won't be re-alerted next run.")
-            logger.error("Fix GMAIL_USER / GMAIL_PASS secrets and re-run.")
+        # 4. Print summary
+        print("\n" + checker.summarize(results, new_by_page) + "\n")
 
-    logger.info("Done.")
+        # 5. Save updated snapshot FIRST (even if email fails, progress is kept)
+        checker.save_snapshot(updated_snapshot)
+
+        # 6. Send email if there are new items
+        total_new = sum(len(items) for items in new_by_page.values())
+        if total_new == 0:
+            logger.info("No new products detected. No email sent.")
+        elif args.dry_run:
+            logger.info(f"--dry-run: {total_new} new item(s) found but email skipped.")
+        else:
+            try:
+                notifier.send_alert(new_by_page)
+            except Exception as e:
+                logger.error(f"EMAIL FAILED: {e}")
+                logger.error("Snapshot was saved — new items won't be re-alerted next run.")
+                logger.error("Fix GMAIL_USER / GMAIL_PASS secrets and re-run.")
+
+        # Sleep between iterations (skip after the last one)
+        if iteration < LOOP_COUNT:
+            logger.info(f"Sleeping {SLEEP_SECONDS}s before next iteration…")
+            time.sleep(SLEEP_SECONDS)
+
+    logger.info("Done — all iterations complete.")
 
 
 if __name__ == "__main__":

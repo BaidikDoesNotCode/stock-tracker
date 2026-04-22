@@ -1,4 +1,3 @@
-from .karzanddolls import KarzAndDollsScraper
 from .giftgalaxy import GiftGalaxyScraper
 from .keraladiecastcars import KeralaDialcastCarsScraper
 from .kolkatakomics import KolkataKomicsScraper
@@ -10,7 +9,6 @@ from .toyssam import ToysSamScraper
 from .playfolio import PlayfolioScraper
 
 SCRAPER_REGISTRY = {
-    "karzanddolls":      KarzAndDollsScraper,
     "giftgalaxy":        GiftGalaxyScraper,
     "keraladiecastcars": KeralaDialcastCarsScraper,
     "kolkatakomics":     KolkataKomicsScraper,
