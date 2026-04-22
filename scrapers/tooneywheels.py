@@ -80,7 +80,7 @@ class TooneyWheelsScraper(BaseScraper):
                 return ListingResult(page_name=name, page_url=url,
                                      products=all_products, error=str(e))
 
-            soup = BeautifulSoup(resp.text, "lxml")
+            soup = BeautifulSoup(resp.text, "html.parser")
 
             # WooCommerce product grid: ul.products > li.product
             product_items = soup.select("ul.products li.product")
